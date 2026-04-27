@@ -283,16 +283,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
 </head>
 <body>
 
-<!-- IMAGE VIEWER -->
 <div id="imgViewer">
   <img id="imgViewerImg" src="" alt="">
   <button class="iv-close" onclick="closeImgViewer()">✕</button>
 </div>
 
-<!-- SPAM TOAST -->
 <div class="spam-toast" id="spamToast">⏳ Tunggu <span id="spamCountdown">30</span>s sebelum posting lagi</div>
 
-<!-- ======= WELCOME ======= -->
 <div id="pgWelcome" class="pg on">
   <div class="w-blob b1"></div><div class="w-blob b2"></div><div class="w-blob b3"></div>
   <div class="w-inner">
@@ -308,7 +305,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </div>
 </div>
 
-<!-- ======= DAFTAR ======= -->
 <div id="pgDaftar" class="pg">
   <div class="auth-box" style="padding:40px 24px;margin:auto;width:100%;max-width:400px;">
     <div class="auth-back" onclick="showPg('pgWelcome')">
@@ -324,7 +320,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </div>
 </div>
 
-<!-- ======= LOGIN ======= -->
 <div id="pgLogin" class="pg">
   <div class="auth-box" style="padding:40px 24px;margin:auto;width:100%;max-width:400px;">
     <div class="auth-back" onclick="showPg('pgWelcome')">
@@ -340,7 +335,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </div>
 </div>
 
-<!-- ======= APP ======= -->
 <div id="pgApp" class="pg">
   <div class="app-top">
     <div class="app-top-left">
@@ -353,9 +347,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
     </div>
   </div>
 
-  <!-- TABS -->
   <div class="tab on" id="tabFeed">
-    <!-- NEW POST -->
     <div class="new-post">
       <div class="np-top">
         <div class="me-av av-purple" id="feedAv" style="margin-top:4px;">?</div>
@@ -472,7 +464,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </nav>
 </div>
 
-<!-- ======= CHAT PAGE ======= -->
 <div id="pgChat" class="pg">
   <div class="chat-top">
     <div class="chat-back" onclick="backFromChat()">
@@ -523,8 +514,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </div>
 </div>
 
-<!-- ======= MODALS ======= -->
-<!-- Tambah Kontak -->
 <div class="modal-ov" id="modalTambahKontak">
   <div class="modal-box" style="position:relative;">
     <button class="modal-close" onclick="closeModal('modalTambahKontak')">✕</button>
@@ -535,7 +524,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </div>
 </div>
 
-<!-- Buat Grup -->
 <div class="modal-ov" id="modalBuatGrup">
   <div class="modal-box" style="position:relative;">
     <button class="modal-close" onclick="closeModal('modalBuatGrup')">✕</button>
@@ -547,7 +535,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
   </div>
 </div>
 
-<!-- Postingan Saya -->
 <div class="modal-ov" id="modalPostinganSaya">
   <div class="modal-box" style="position:relative;max-height:80vh;overflow-y:auto;">
     <button class="modal-close" onclick="closeModal('modalPostinganSaya')">✕</button>
@@ -561,20 +548,40 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-
 let me = null;
 let accounts = [];
 let posts = [];
-let chats = {}; // key: chatId → [{from,text,type,data,time,sender}]
-let groups = []; // [{id,name,members:[id...],createdBy}]
-let contacts = {}; // userId → [userId...]
-let notifs = {}; // userId → [{icon,txt,time}]
+let chats = {}; 
+let groups = []; 
+let contacts = {}; 
+let notifs = {}; 
+
+// Persistence functions
+function saveData() {
+    const data = { accounts, posts, chats, groups, contacts, notifs };
+    localStorage.setItem('JJS_DATA', JSON.stringify(data));
+}
+
+function loadData() {
+    const saved = localStorage.getItem('JJS_DATA');
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        accounts = parsed.accounts || [];
+        posts = parsed.posts || [];
+        chats = parsed.chats || {};
+        groups = parsed.groups || [];
+        contacts = parsed.contacts || {};
+        notifs = parsed.notifs || {};
+    }
+}
+loadData(); // Load on start
 
 // Spam control
 let postLastTime = 0;
-let chatLastTime = {}; // chatId → timestamp
+let chatLastTime = {}; 
 let spamTimer = null;
 let spamChatTimer = {};
 
 // Media pending
-let npMedia = null; // {type:'img'|'audio', dataUrl, name}
-let npFile = null;  // {name, dataUrl, size}
+let npMedia = null; 
+let npFile = null;  
 let chatAttach = null;
 let chatFile = null;
 
@@ -625,6 +632,7 @@ function daftar(){
   const acc={username:u, password:p, id:genId(), createdAt:Date.now()};
   accounts.push(acc);
   contacts[acc.id]=[]; notifs[acc.id]=[];
+  saveData();
   showNotif('nDaftar','Akun berhasil dibuat! Silakan login ✅','ok');
   setTimeout(()=>{ document.getElementById('dU').value=''; document.getElementById('dP').value=''; showPg('pgLogin'); }, 1500);
 }
@@ -685,13 +693,14 @@ function kirimPost(){
   const post={id:Date.now(), userId:me.id, username:me.username, text:txt, time:Date.now(), media:npMedia, file:npFile};
   posts.unshift(post);
   postLastTime=now;
+  saveData();
   document.getElementById('npText').value='';
   clearPreview(); clearFile();
   renderFeed();
-  // notify contacts
   if(contacts[me.id]) contacts[me.id].forEach(cid=>{
     if(!notifs[cid]) notifs[cid]=[];
     notifs[cid].unshift({icon:'📝',txt:`${me.username} membuat postingan baru`,time:Date.now()});
+    saveData();
   });
 }
 
@@ -753,6 +762,7 @@ function likePost(id,btn){
   if(!p.likedBy) p.likedBy=[];
   if(p.likedBy.includes(me.id)){p.likedBy=p.likedBy.filter(x=>x!==me.id);p.likes=(p.likes||1)-1;}
   else{p.likedBy.push(me.id);p.likes=(p.likes||0)+1;}
+  saveData();
   renderFeed();
 }
 
@@ -887,7 +897,6 @@ function renderChatMsgs(){
 function kirimChat(){
   const now=Date.now();
   const SPAM_MS=30000;
-  // Cek spam
   if(chatLastTime[currentChatId]&&(now-chatLastTime[currentChatId])<SPAM_MS){
     const sisa=Math.ceil((SPAM_MS-(now-chatLastTime[currentChatId]))/1000);
     const warn=document.getElementById('chatSpamWarn');
@@ -916,6 +925,7 @@ function kirimChat(){
   if(!chats[currentChatId]) chats[currentChatId]=[];
   chats[currentChatId].push(msg);
   chatLastTime[currentChatId]=now;
+  saveData();
   document.getElementById('chatInp').value='';
   clearChatAttach(); clearChatFile();
   renderChatMsgs();
@@ -1001,9 +1011,10 @@ function tambahKontak(){
   if(contacts[me.id].includes(id)){ showNotif('nTambahKontak','Sudah ada di kontak!','warn'); return; }
   contacts[me.id].push(id);
   if(!contacts[id]) contacts[id]=[];
-  if(!contacts[id].includes(me.id)) contacts[id].push(me.id); // saling add
+  if(!contacts[id].includes(me.id)) contacts[id].push(me.id); 
   if(!notifs[id]) notifs[id]=[];
   notifs[id].unshift({icon:'👤',txt:`${me.username} menambahkan kamu sebagai kontak`,time:Date.now()});
+  saveData();
   showNotif('nTambahKontak','Kontak berhasil ditambahkan! ✅','ok');
   document.getElementById('tkId').value='';
   setTimeout(()=>closeModal('modalTambahKontak'),1200);
@@ -1027,6 +1038,7 @@ function buatGrup(){
     if(!notifs[mid]) notifs[mid]=[];
     if(mid!==me.id) notifs[mid].unshift({icon:'👥',txt:`${me.username} menambahkan kamu ke grup "${nama}"`,time:Date.now()});
   });
+  saveData();
   showNotif('nBuatGrup','Grup berhasil dibuat! ✅','ok');
   document.getElementById('bgNama').value=''; document.getElementById('bgAnggota').value='';
   setTimeout(()=>closeModal('modalBuatGrup'),1200);
